@@ -5,7 +5,6 @@ import "github.com/jinzhu/gorm"
 // Todo is todo.
 type Todo struct {
 	gorm.Model
-	// ID      uint
-	Title   string
-	DueDate string
+	Title   string `json:"title" binding:"required"`
+	DueDate string `json:"due_date"`
 }
