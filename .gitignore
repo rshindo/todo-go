@@ -16,3 +16,6 @@ todo-go
 
 # DB file
 *.db
+
+# go.sum should not be added to git repo
+go.sum

@@ -5,8 +5,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/rshindo/todo-go/common"
-	"net/http"
-	"strconv"
+	"github.com/rshindo/todo-go/todo"
 )
 
 var db *gorm.DB
@@ -15,37 +14,13 @@ func main() {
 	db := common.Init()
 	defer common.Close()
 
-	db.AutoMigrate(&Todo{})
+	db.AutoMigrate(&todo.Todo{})
 
 	r := gin.Default()
 	r.GET("/ping", Pong)
-	r.POST("/todo", func(c *gin.Context) {
-		var json Todo
-		if err := c.ShouldBindJSON(&json); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		db.Create(&json)
-		c.JSON(http.StatusCreated, json)
-	})
-	r.GET("/todo", func(c *gin.Context) {
-		var todos []Todo
-		db.Find(&todos)
-		c.JSON(http.StatusOK, gin.H{"todos": todos})
-	})
-	r.GET("/todo/:id", func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		var todo Todo
-		recordNotFound := db.First(&todo, id).RecordNotFound()
-		if recordNotFound == true {
-			c.JSON(http.StatusNotFound, gin.H{"error": "ID not found."})
-			return
-		}
-		c.JSON(http.StatusOK, todo)
-	})
+
+	v1 := r.Group("/api")
+	todo.TodoRegister(v1.Group("todo"))
+
 	r.Run()
 }

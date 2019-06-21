@@ -18,6 +18,11 @@ func Init() *gorm.DB {
 	return DB
 }
 
+// GetDB returns db instance.
+func GetDB() *gorm.DB {
+	return DB
+}
+
 // Close connection
 func Close() {
 	if DB != nil {
