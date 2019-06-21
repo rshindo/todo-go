@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/rshindo/todo-go/common"
 	"net/http"
 	"strconv"
 )
@@ -11,11 +12,8 @@ import (
 var db *gorm.DB
 
 func main() {
-	db, err := gorm.Open("sqlite3", "test.db")
-	if err != nil {
-		panic("failed to connect db")
-	}
-	defer db.Close()
+	db := common.Init()
+	defer common.Close()
 
 	db.AutoMigrate(&Todo{})
 
