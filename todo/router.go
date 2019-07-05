@@ -1,14 +1,17 @@
 package todo
 
-import "net/http"
-import "strconv"
-import "github.com/gin-gonic/gin"
-import "github.com/rshindo/todo-go/common"
+import (
+	"net/http"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/rshindo/todo-go/common"
+)
 
 func TodoRegister(router *gin.RouterGroup) {
 	router.GET("/:id", todoRetrieve)
 	router.GET("", todosRetrieve)
-	router.POST("", todoRetrieve)
+	router.POST("", todoCreate)
 }
 
 func todoRetrieve(c *gin.Context) {
@@ -17,30 +20,56 @@ func todoRetrieve(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	var todo Todo
+	var todoModel Todo
 	db := common.GetDB()
-	recordNotFound := db.First(&todo, id).RecordNotFound()
+	recordNotFound := db.First(&todoModel, id).RecordNotFound()
 	if recordNotFound == true {
 		c.JSON(http.StatusNotFound, gin.H{"error": "ID not found."})
 		return
 	}
+
+	var todo TodoJSON
+	modelToJSON(todoModel, &todo)
 	c.JSON(http.StatusOK, todo)
 }
 
 func todoCreate(c *gin.Context) {
-	var json Todo
+	var json TodoJSON
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	db := common.GetDB()
-	db.Create(&json)
+	var todoModel Todo
+	jsonToModel(json, &todoModel)
+	db.Create(&todoModel)
+
+	modelToJSON(todoModel, &json)
 	c.JSON(http.StatusCreated, json)
 }
 
 func todosRetrieve(c *gin.Context) {
-	var todos []Todo
+	var todoModels []Todo
 	db := common.GetDB()
-	db.Find(&todos)
+	db.Find(&todoModels)
+
+	var todos []TodoJSON
+	for _, todoModel := range todoModels {
+		var todo TodoJSON
+		modelToJSON(todoModel, &todo)
+		todos = append(todos, todo)
+	}
 	c.JSON(http.StatusOK, gin.H{"todos": todos})
+}
+
+func modelToJSON(model Todo, todo *TodoJSON) {
+	todo.ID = model.ID
+	todo.Title = model.Title
+	todo.DueDate = model.DueDate
+}
+
+func jsonToModel(todo TodoJSON, model *Todo) {
+	model.ID = todo.ID
+	model.Title = todo.Title
+	model.DueDate = todo.DueDate
 }
